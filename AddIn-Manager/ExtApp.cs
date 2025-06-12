@@ -1,5 +1,4 @@
-﻿using Autodesk.AutoCAD.ApplicationServices.Core;
-using Autodesk.AutoCAD.Runtime;
+﻿using Autodesk.AutoCAD.Runtime;
 using Autodesk.Windows;
 using System;
 using System.Collections.Generic;
@@ -43,59 +42,59 @@ namespace AddIn_Manager
 
         public void Initialize()
         {
-            ComponentManager.ItemInitialized += ComponentManager_ItemInitialized;
+            Autodesk.AutoCAD.ApplicationServices.Application.Idle += CADApplication_Idle;  
         }
 
-        private void ComponentManager_ItemInitialized(object sender, RibbonItemEventArgs e)
+        private void CADApplication_Idle(object sender, EventArgs e)
         {
-            if (ComponentManager.Ribbon != null)
+            RibbonTab manageTab = ComponentManager.Ribbon.FindTab("ACAD.ID_TabManage");
+            if (manageTab == null || manageTab.Panels.Count <= 0) return;
+
+            var panelSource = new RibbonPanelSource()
             {
-                var panelSource = new RibbonPanelSource()
-                {
-                    Id = "AddIn_Manager.RibbonPanel",
-                    Name = "AddIn_Manager.RibbonPanel",
-                    Title = "AddIn Manager",
-                };
-                var button = new RibbonButton()
-                {
-                    Id = "AddIn_Manager.ShowView",
-                    Name = "AddIn_Manager.ShowView",
-                    Text = "AddIn Manager",
-                    Image = BitmapToImageSource(Properties.Resources.Amitjakhu_Drip_Gear_16),
-                    LargeImage = BitmapToImageSource(Properties.Resources.Amitjakhu_Drip_Gear_32),
-                    CommandHandler = new ShowAddInManagerCommand(),
-                    ShowText = true,
-                    Size = RibbonItemSize.Large,
-                    Orientation = System.Windows.Controls.Orientation.Vertical
-                };
-                panelSource.Items.Add(button);
+                Id = "AddIn_Manager.RibbonPanel",
+                Name = "AddIn_Manager.RibbonPanel",
+                Title = "AddIn Manager",
+            };
+            var button = new RibbonButton()
+            {
+                Id = "AddIn_Manager.ShowView",
+                Name = "AddIn_Manager.ShowView",
+                Text = "AddIn Manager",
+                Image = BitmapToImageSource(Properties.Resources.Amitjakhu_Drip_Gear_16),
+                LargeImage = BitmapToImageSource(Properties.Resources.Amitjakhu_Drip_Gear_32),
+                CommandHandler = new ShowAddInManagerCommand(),
+                ShowText = true,
+                Size = RibbonItemSize.Large,
+                Orientation = System.Windows.Controls.Orientation.Vertical
+            };
+            panelSource.Items.Add(button);
 
-                var panel = new RibbonPanel()
+            var panel = new RibbonPanel()
+            {
+                Source = panelSource,
+            };
+
+            var tab = ComponentManager.Ribbon.FindTab("ACAD.RBN_00012112");
+            if (tab == null)
+            {
+                tab = new RibbonTab()
                 {
-                    Source = panelSource,
+                    Id = "AddIn_Manager.TabId",
+                    Name = "AddIn Manager",
+                    Title = "AddIn Manager"
                 };
+                tab.Panels.Add(panel);
+                tab.IsVisible = true;
 
-                var tab = ComponentManager.Ribbon.FindTab("ACAD.RBN_00012112");
-                if (tab == null)
-                {
-                    tab = new RibbonTab()
-                    {
-                        Id = "AddIn_Manager.TabId",
-                        Name = "AddIn Manager",
-                        Title = "AddIn Manager"
-                    };
-                    tab.Panels.Add(panel);
-                    tab.IsVisible = true;
-
-                    ComponentManager.Ribbon.Tabs.Add(tab);
-                }
-                else
-                {
-                    tab.Panels.Add(panel);
-                    tab.IsVisible = true;
-                }
-                ComponentManager.ItemInitialized -= ComponentManager_ItemInitialized;
+                ComponentManager.Ribbon.Tabs.Add(tab);
             }
+            else
+            {
+                tab.Panels.Add(panel);
+                tab.IsVisible = true;
+            }
+            Autodesk.AutoCAD.ApplicationServices.Application.Idle -= CADApplication_Idle;
         }
 
         public void Terminate()

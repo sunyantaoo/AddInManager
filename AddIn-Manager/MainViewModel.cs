@@ -54,7 +54,6 @@ namespace AddIn_Manager
 
         private System.Windows.Window _window;
         private const string _configureFileName = "AddInManager.json";
-        private readonly ExtensionLoader _extensionLoader;
 
         public MainViewModel(System.Windows.Window hostedWindow)
         {
@@ -235,7 +234,18 @@ namespace AddIn_Manager
         private IList<CmdMethod> GetCmds(Assembly assembly)
         {
             var methods = new List<CmdMethod>();
-            foreach (var type in assembly.GetTypes())
+
+            IEnumerable<Type> types;
+            try
+            {
+                types = assembly.GetTypes();
+            }
+            catch (System.Reflection.ReflectionTypeLoadException ex)
+            {
+                types = ex.Types.Where(x => x != null).ToList();
+            }
+
+            foreach (var type in types)
             {
                 var cmdMethods = type.GetMethods().Where(x => x.GetCustomAttribute<CommandMethodAttribute>() != null);
                 if (cmdMethods.Any())
